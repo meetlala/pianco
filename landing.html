@@ -418,33 +418,39 @@
 		<span class="iconify" data-icon="mdi-close"></span>
 	</button>
 </div>
-<script defer async="false"> // render keyboard (moved from main, to speed up LCP)
+<script> // render keyboard (moved from main, to speed up LCP)
 const allNotes = []
 const hint = document.querySelector('.hint')
-if (window.matchMedia("(min-width: 500px)").matches) {
-  allNotes.push("A0", "A#0", "B0")
-  ;[1, 2, 3, 4, 5, 6, 7].forEach(octave => {
-    "CDEFGAB".split('').forEach(letter => {
-      allNotes.push(`${letter}${octave}`)
-      if (letter !== 'E' && letter !== 'B') {
-        allNotes.push(`${letter}#${octave}`)
-      }
-    })
-  })
-  allNotes.push('C8')
-} else {
-  const octave = 4
+allNotes.push("A0", "A#0", "B0")
+;[1, 2, 3, 4, 5, 6, 7].forEach(octave => {
   "CDEFGAB".split('').forEach(letter => {
     allNotes.push(`${letter}${octave}`)
     if (letter !== 'E' && letter !== 'B') {
       allNotes.push(`${letter}#${octave}`)
     }
   })
-  for (let i = 0; i < 12; i++) {
-    hint.removeChild(hint.lastChild)
-  }
-}
+})
+allNotes.push('C8')
 window.addEventListener('DOMContentLoaded', () => {
+  if (!window.matchMedia("(min-width: 500px)").matches) {
+    for (let i = 0; i < 12; i++) {
+      hint.removeChild(hint.lastChild)
+    }
+    const bottomKeys = document.querySelector('.bottom-keys')
+    for (let i = 0; i < 22; i++) {
+      bottomKeys.removeChild(bottomKeys.lastChild)
+    }
+    for (let i = 0; i < 23; i++) {
+      bottomKeys.removeChild(bottomKeys.firstChild)
+    }
+    const topKeys = document.querySelector('.top-keys')
+    for (let i = 0; i < 37; i++) {
+      topKeys.removeChild(topKeys.lastChild)
+    }
+    for (let i = 0; i < 39; i++) {
+      topKeys.removeChild(topKeys.firstChild)
+    }
+  }
   hint.hidden = false
 })
 
