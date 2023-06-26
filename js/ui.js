@@ -7,6 +7,7 @@ const defaultSettings = {
   velocity: true,
   score: 1,
   cinema: false,
+  styles: false,
 }
 
 function removeHash() {
@@ -20,6 +21,26 @@ window.addEventListener('hashchange', () => {
 })
 
 const actions = {
+  styles: (val) => {
+    if (val) {
+      document.querySelector('body').classList.add('customStyles')
+      document.querySelector('.keyboard').classList.add('customStyles')
+      document.querySelector('.bottom-keys').classList.add('customStyles')
+      document.querySelector('.top-keys').classList.add('customStyles')
+      document.querySelector('div.hint').classList.add('customStyles')
+      document.querySelector('#toggle-styles svg:first-child').style.display = 'block'
+      document.querySelector('#toggle-styles svg:last-child').style.display = 'none'
+    } else {
+      document.querySelector('body').classList.remove('customStyles')
+      document.querySelector('.keyboard').classList.remove('customStyles')
+      document.querySelector('.bottom-keys').classList.remove('customStyles')
+      document.querySelector('.top-keys').classList.remove('customStyles')
+      document.querySelector('div.hint').classList.remove('customStyles')
+      document.querySelector('.hint').classList.remove('customStyles')
+      document.querySelector('#toggle-styles svg:first-child').style.display = 'none'
+      document.querySelector('#toggle-styles svg:last-child').style.display = 'block'
+    }
+  },
   labels: (val) => {
     const keyboard = document.querySelector('.keyboard')
     keyboard.classList[val > 0 ? 'add' : 'remove']('letters')
