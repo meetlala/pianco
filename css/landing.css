@@ -1440,6 +1440,17 @@ body.mobile *{
 		left: 0px;
 		right: 0px;
 	}
+	.bottom-keys button:nth-child(n + 31),
+	.bottom-keys button:nth-child(-n + 23) {
+		display: none;
+	}
+	.top-keys button:nth-child(n + 52),
+	.top-keys button:nth-child(-n + 39) {
+		display: none;
+	}
+	.hint button:nth-child(n + 13) {
+		display: none;
+	}
 }
 @media(hover: none) {
 	[data-tippy-root] {
