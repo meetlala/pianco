@@ -5,7 +5,7 @@ const defaultSettings = {
   labels: 1,
   qwerty: true,
   velocity: true,
-  score: 1,
+  score: 0,
   cinema: false,
   styles: false,
 }
