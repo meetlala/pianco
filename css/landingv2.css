@@ -90,6 +90,21 @@ header h1#logo::before {
 header h1#logo::after {
 }
 
+.loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-left: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .reacter {
 	display: flex;
 	flex-direction: column;
@@ -165,7 +180,7 @@ header h1#logo::after {
 .content {
 	width: 100%;
 	flex-grow: 1;
-	display: flex;
+	display: none; /* until mp3 loaded */
 	flex-direction: row;
 }
 
@@ -1410,7 +1425,7 @@ body.mobile *{
 		padding: 0;
 	}
 	body.framed footer.bar {
-		display: flex;
+		display: none; /* until mp3 loaded */
 		gap: 5px;
 	}
 	.reacter {
@@ -1529,11 +1544,13 @@ body.framed .back-background {
 }
 
 body.framed footer {
-	display: flex;
+	display: none; /* until mp3 loaded */
 	flex-wrap: wrap;
 	box-shadow: none;
 	background-color: transparent;
 	padding: 0 0.5rem;
+	position: absolute;
+	bottom: 6px;
 }
 body.framed footer .bar {
 	display: flex;
@@ -1558,10 +1575,6 @@ body.framed header {
 	position: absolute;
 	top: 20px;
 	z-index: 2;
-}
-body.framed footer {
-	position: absolute;
-	bottom: 6px;
 }
 body.framed .content {
 	position: absolute;
