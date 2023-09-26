@@ -809,11 +809,11 @@ div.hint {
 	right: 0px;
 }
 
-.hint[style="left: 63rem;"] button:nth-child(14),
-.hint[style="left: 63rem;"] button:nth-child(15),
-.hint[style="left: 63rem;"] button:nth-child(16),
-.hint[style="left: 63rem;"] button:nth-child(17),
-.hint[style="left: 63rem;"] button:nth-child(18) {
+.hint[style="left: 945px;"] button:nth-child(14),
+.hint[style="left: 945px;"] button:nth-child(15),
+.hint[style="left: 945px;"] button:nth-child(16),
+.hint[style="left: 945px;"] button:nth-child(17),
+.hint[style="left: 945px;"] button:nth-child(18) {
 	visibility: hidden;
 }
 
