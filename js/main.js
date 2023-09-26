@@ -20,7 +20,7 @@ import './ui.js'
 let transposition = 0
 
 const _ = cb => e => {
-  e.preventDefault()
+  // e.preventDefault()
   if (['mousedown', 'touchstart'].includes(e.type)) {
     window.focus()
   }
