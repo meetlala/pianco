@@ -19,6 +19,16 @@ export const instrumentApp = new Vue({
   },
   watch: {
     instrument (newInstrument, oldInstumen) {
+      if (this.instrument === 'Salamander piano') {
+        setTimeout(() => {
+          document.querySelector('.content').style.display = "flex"
+          const footer = document.querySelector('body.framed footer')
+          if (footer) {
+            footer.style.display = "flex"
+          }
+          document.querySelector('.loader').style.display = "none"
+        }, 0)
+      }
       allOff()
       // TODO - blur on click?
     },
