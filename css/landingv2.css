@@ -1591,9 +1591,12 @@ body.framed .loader {
 	position: absolute;
 	width: 100%;
 	height: 100%;
-	font-size: 15vw;
+	font-size: 10vw;
 	justify-content: center;
 	align-items: center;
+	background-color: white;
+	opacity: 0.8;
+	z-index: 10;
 }
 .kick-start :first-child {
 	display: none;
@@ -1602,6 +1605,9 @@ body.framed .loader {
 	display: flex;
 }
 @media (max-width: 976px) {
+	.kick-start {
+		font-size: 15vw;
+	}
 	.kick-start :first-child {
 		display: flex;
 	}

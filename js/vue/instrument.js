@@ -26,19 +26,13 @@ export const instrumentApp = new Vue({
           if (overlay) {
             overlay.style.display = "flex"
             overlay.addEventListener("click", () => {
-              document.querySelector('.content').style.display = "flex"
-              const footer = document.querySelector('body.framed footer')
-              if (footer) {
-                footer.style.display = "flex"
-              }
               overlay.style.display = "none"
             })
-          } else {
-            document.querySelector('.content').style.display = "flex"
-            const footer = document.querySelector('body.framed footer')
-            if (footer) {
-              footer.style.display = "flex"
-            }
+          }
+          document.querySelector('.content').style.display = "flex"
+          const footer = document.querySelector('body.framed footer')
+          if (footer) {
+            footer.style.display = "flex"
           }
         }, 0)
       }
