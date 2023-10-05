@@ -21,12 +21,25 @@ export const instrumentApp = new Vue({
     instrument (newInstrument, oldInstumen) {
       if (this.instrument === 'Salamander piano') {
         setTimeout(() => {
-          document.querySelector('.content').style.display = "flex"
-          const footer = document.querySelector('body.framed footer')
-          if (footer) {
-            footer.style.display = "flex"
-          }
           document.querySelector('.loader').style.display = "none"
+          const overlay = document.querySelector('.framed .kick-start')
+          if (overlay) {
+            overlay.style.display = "flex"
+            overlay.addEventListener("click", () => {
+              document.querySelector('.content').style.display = "flex"
+              const footer = document.querySelector('body.framed footer')
+              if (footer) {
+                footer.style.display = "flex"
+              }
+              overlay.style.display = "none"
+            })
+          } else {
+            document.querySelector('.content').style.display = "flex"
+            const footer = document.querySelector('body.framed footer')
+            if (footer) {
+              footer.style.display = "flex"
+            }
+          }
         }, 0)
       }
       allOff()
