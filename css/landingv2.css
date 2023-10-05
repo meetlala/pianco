@@ -1601,7 +1601,7 @@ body.framed .loader {
 .kick-start :last-child {
 	display: flex;
 }
-@media (max-width: 1024px) {
+@media (max-width: 976px) {
 	.kick-start :first-child {
 		display: flex;
 	}
