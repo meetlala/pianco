@@ -51,7 +51,17 @@ class Tape {
 
       // Create the duplicated tape with updated times
       for (let i = 0; i < originalLength; i++) {
-        const newEvent = { ...originalTape[i], time: originalTape[i].time + lastEventTime + 1 }
+        // Clone the event to avoid modifying the original
+        const originalEvent = originalTape[i]
+        const newEvent = { 
+          ...originalEvent, 
+          data: [...originalEvent.data],
+          time: originalEvent.time + lastEventTime + 1 
+        }
+        // Increase the tone by 1
+        if (newEvent.data[3] >= NOTE_A0 && newEvent.data[3] <= NOTE_C8) {
+          newEvent.data[3] += 1
+        }
         this.tape.push(newEvent)
       }
     }
