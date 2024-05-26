@@ -39,7 +39,23 @@ class Tape {
     this.isRecording = true
     WSS.send(this.gid, this.uid, `isRecording ${true}`)
   }
-  stop () {
+  stop() {
+    // Only duplicate and extend the tape if isRecording is true
+    if (this.isRecording) {
+      this.isRecording = false
+
+      // Duplicate and extend the tape
+      const originalLength = this.tape.length
+      const originalTape = [...this.tape]
+      const lastEventTime = this.tape[originalLength - 1]?.time || 0
+
+      // Create the duplicated tape with updated times
+      for (let i = 0; i < originalLength; i++) {
+        const newEvent = { ...originalTape[i], time: originalTape[i].time + lastEventTime + 1 }
+        this.tape.push(newEvent)
+      }
+    }
+
     this.isRecording = false
     this.isPlaying = false
     WSS.send(this.gid, this.uid, `isRecording ${false}`)
