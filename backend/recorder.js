@@ -31,6 +31,8 @@ class Tape {
   seekIndex = 0
   timeout = 0
   tape = []
+  repeatCount = 10 // default repeat count, can be set dynamically
+
   constructor(gid, uid) {
     this.gid = gid
     this.uid = uid
@@ -39,7 +41,37 @@ class Tape {
     this.isRecording = true
     WSS.send(this.gid, this.uid, `isRecording ${true}`)
   }
-  stop () {
+  stop() {
+    // Only duplicate and extend the tape if isRecording is true
+    if (this.isRecording) {
+      this.isRecording = false
+
+      // Duplicate and extend the tape
+      const originalLength = this.tape.length
+      const originalTape = [...this.tape]
+      const lastEventTime = this.tape[originalLength - 1]?.time || 0
+
+      // Repeat the tape N times with increasing tones
+      for (let n = 1; n < this.repeatCount; n++) {
+        for (let i = 0; i < originalLength; i++) {
+          // Clone the event to avoid modifying the original
+          const originalEvent = originalTape[i]
+          const newEvent = {
+            ...originalEvent,
+            data: [...originalEvent.data],
+            time: originalEvent.time + lastEventTime + 1
+          }
+          // Increase the tone by 1
+          if (newEvent.data[3] >= NOTE_A0 && newEvent.data[3] <= NOTE_C8) {
+            newEvent.data[3] += n
+          }
+          this.tape.push(newEvent)
+        
+        }
+      }
+    }
+    
+
     this.isRecording = false
     this.isPlaying = false
     WSS.send(this.gid, this.uid, `isRecording ${false}`)
