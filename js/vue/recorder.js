@@ -12,18 +12,25 @@ export const recorderApp = new Vue({
       this.isRecording = false
       this.isPlaying = false
     },
-    toggleRecord () {
+    toggleRecord() {
       if (this.isRecording || this.isPlaying) {
-        recorder.stop()
+        recorder.stop();
+        this.isRecording = false;
+        this.isPlaying = false;
       } else {
-        recorder.record()
+        recorder.record();
+        this.isRecording = true;
+        this.isPlaying = false;
       }
     },
-    togglePlay () {
+    togglePlay() {
       if (this.isPlaying) {
-        recorder.pause()
+        recorder.pause();
+        this.isPlaying = false;
       } else {
-        recorder.replay()
+        recorder.replay();
+        this.isPlaying = true;
+        this.isRecording = false;
       }
     },
   }
