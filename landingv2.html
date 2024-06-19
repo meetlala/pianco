@@ -236,15 +236,15 @@
 							v-tippy :content="(isRecording || isPlaying) ? 'stop' : 'record'"
 							:aria-label="(isRecording || isPlaying) ? 'stop' : 'record'"
 					>
-						<span v-show="!isRecording && !isPlaying" class="iconify" data-icon="mdi-record"></span>
-						<span v-show="isRecording || isPlaying" class="iconify" data-icon="mdi-stop"></span>
+						<span v-if="!isRecording && !isPlaying" class="iconify" data-icon="mdi-record"></span>
+						<span v-else class="iconify" data-icon="mdi-stop"></span>
 					</button>
 					<button @click="togglePlay"
 							v-tippy :content="!isPlaying ? 'replay' : 'pause'"
 							:aria-label="!isPlaying ? 'replay' : 'pause'"
 					>
-						<span v-show="!isPlaying" class="iconify" data-icon="mdi-play"></span>
-						<span v-show="isPlaying" class="iconify" data-icon="mdi-pause"></span>
+						<span v-if="!isPlaying" class="iconify" data-icon="mdi-play"></span>
+						<span v-else class="iconify" data-icon="mdi-pause"></span>
 					</button>
 				</div>
 			</div>
