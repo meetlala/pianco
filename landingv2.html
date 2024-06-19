@@ -229,7 +229,7 @@
 
 			<div id="recorder-app" v-cloak>
 				<div
-						v-if="visible"
+						v-show="visible"
 						:class="{ isRecording, isPlaying }"
 				>
 					<button @click="toggleRecord"
