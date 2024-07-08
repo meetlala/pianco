@@ -229,7 +229,7 @@
 
 			<div id="recorder-app" v-cloak>
 				<div
-						v-if="visible"
+						v-show="visible"
 						:class="{ isRecording, isPlaying }"
 				>
 					<button @click="toggleRecord"
@@ -237,14 +237,14 @@
 							:aria-label="(isRecording || isPlaying) ? 'stop' : 'record'"
 					>
 						<span v-if="!isRecording && !isPlaying" class="iconify" data-icon="mdi-record"></span>
-						<span v-if="isRecording || isPlaying" class="iconify" data-icon="mdi-stop"></span>
+						<span v-else class="iconify" data-icon="mdi-stop"></span>
 					</button>
 					<button @click="togglePlay"
 							v-tippy :content="!isPlaying ? 'replay' : 'pause'"
 							:aria-label="!isPlaying ? 'replay' : 'pause'"
 					>
 						<span v-if="!isPlaying" class="iconify" data-icon="mdi-play"></span>
-						<span v-if="isPlaying" class="iconify" data-icon="mdi-pause"></span>
+						<span v-else class="iconify" data-icon="mdi-pause"></span>
 					</button>
 				</div>
 			</div>
