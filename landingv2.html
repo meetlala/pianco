@@ -242,7 +242,21 @@
 						<span v-if="!isRecording && !isPlaying" class="iconify" data-icon="mdi-record"></span>
 						<span v-else class="iconify" data-icon="mdi-stop"></span>
 					</button>
-					<button @click="togglePlay"
+					<button @click="togglePlayUp"
+							v-tippy :content="!isPlayingUp ? 'replay up' : 'pause up'"
+							:aria-label="!isPlayingUp ? 'replay up' : 'pause up'"
+					>
+						<span v-if="!isPlayingUp" class="iconify" data-icon="mdi-arrow-up"></span>
+						<span v-else class="iconify" data-icon="mdi-pause"></span>
+					</button>
+					<button @click="togglePlayUp"
+							v-tippy :content="!isPlaying ? 'replay' : 'pause'"
+							:aria-label="!isPlaying ? 'replay' : 'pause'"
+					>
+						<span v-if="!isPlaying" class="iconify" data-icon="mdi-play"></span>
+						<span v-else class="iconify" data-icon="mdi-pause"></span>
+					</button>
+					<button @click="togglePlayDown"
 							v-tippy :content="!isPlaying ? 'replay' : 'pause'"
 							:aria-label="!isPlaying ? 'replay' : 'pause'"
 					>

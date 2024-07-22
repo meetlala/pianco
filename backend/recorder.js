@@ -31,6 +31,7 @@ class Tape {
   seekIndex = 0
   timeout = 0
   tape = []
+  extendedTape = []
   repeatCount = 10 // default repeat count, can be set dynamically
 
   constructor(gid, uid) {
@@ -41,37 +42,7 @@ class Tape {
     this.isRecording = true
     WSS.send(this.gid, this.uid, `isRecording ${true}`)
   }
-  stop() {
-    // Only duplicate and extend the tape if isRecording is true
-    if (this.isRecording) {
-      this.isRecording = false
-
-      // Duplicate and extend the tape
-      const originalLength = this.tape.length
-      const originalTape = [...this.tape]
-      const lastEventTime = this.tape[originalLength - 1]?.time || 0
-
-      // Repeat the tape N times with increasing tones
-      for (let n = 1; n < this.repeatCount; n++) {
-        for (let i = 0; i < originalLength; i++) {
-          // Clone the event to avoid modifying the original
-          const originalEvent = originalTape[i]
-          const newEvent = {
-            ...originalEvent,
-            data: [...originalEvent.data],
-            time: originalEvent.time + lastEventTime + 1
-          }
-          // Increase the tone by 1
-          if (newEvent.data[3] >= NOTE_A0 && newEvent.data[3] <= NOTE_C8) {
-            newEvent.data[3] += n
-          }
-          this.tape.push(newEvent)
-        
-        }
-      }
-    }
-    
-
+  stop () {
     this.isRecording = false
     this.isPlaying = false
     WSS.send(this.gid, this.uid, `isRecording ${false}`)
@@ -80,28 +51,87 @@ class Tape {
     this.seekIndex = 0
     clearTimeout(this.timeout)
   }
-  play () {
+  play() {
     if (this.isRecording) {
-      this.seekIndex = 0
-      this.seekTime = 0
-      this.isRecording = false
-      WSS.send(this.gid, this.uid, `isRecording ${false}`)
+      this.seekIndex = 0;
+      this.seekTime = 0;
+      this.isRecording = false;
+      WSS.send(this.gid, this.uid, `isRecording ${false}`);
     }
-    this.isPlaying = true
-    WSS.send(this.gid, this.uid, `isPlaying ${true}`)
-    const event = this.tape[this.seekIndex]
-    if (!event) {
-      this.stop()
-      return
-    }
-    // schedule replay of event
-    this.timeout = setTimeout(() => {
-      this.seekIndex++
-      this.seekTime = event.time
-      WSS.broadcast(this.gid, event.data)
-      this.play() // next note
-    }, event.time - this.seekTime)
+    this.extendedTape = [...this.tape];
+    this._play();
   }
+
+  playUp() {
+    if (this.isRecording) {
+      this.seekIndex = 0;
+      this.seekTime = 0;
+      this.isRecording = false;
+      WSS.send(this.gid, this.uid, `isRecording ${false}`);
+    }
+    this.createExtendedTapeUp();
+    this._play();
+  }
+
+  playDown() {
+    if (this.isRecording) {
+      this.seekIndex = 0;
+      this.seekTime = 0;
+      this.isRecording = false;
+      WSS.send(this.gid, this.uid, `isRecording ${false}`);
+    }
+    this.createExtendedTapeDown();
+    this._play();
+  }
+
+  createExtendedTapeUp() {
+    const originalLength = this.tape.length;
+    const lastEventTime = this.tape[originalLength - 1]?.time || 0;
+    this.extendedTape = [];
+
+    for (let n = 0; n < this.repeatCount; n++) {
+      this.extendedTape = this.extendedTape.concat(this.tape.map(event => ({
+        ...event,
+        time: event.time + n * (lastEventTime + 1),
+        data: event.data.map((value, idx) => idx === 3 && value >= NOTE_A0 && value <= NOTE_C8 ? value + n : value)
+      })));
+    }
+  }
+
+  createExtendedTapeDown() {
+    const originalLength = this.tape.length;
+    const lastEventTime = this.tape[originalLength - 1]?.time || 0;
+    this.extendedTape = [];
+
+    for (let n = 0; n < this.repeatCount; n++) {
+      this.extendedTape = this.extendedTape.concat(this.tape.map(event => ({
+        ...event,
+        time: event.time + n * (lastEventTime + 1),
+        data: event.data.map((value, idx) => idx === 3 && value >= NOTE_A0 && value <= NOTE_C8 ? value - n : value)
+      })));
+    }
+  }
+
+  _play() {
+    this.isPlaying = true;
+    WSS.send(this.gid, this.uid, `isPlaying ${true}`);
+
+    const event = this.extendedTape[this.seekIndex];
+    if (!event) {
+      this.stop();
+      return;
+    }
+
+    // Schedule replay of event
+    this.timeout = setTimeout(() => {
+      this.seekIndex++;
+      this.seekTime = event.time;
+      WSS.broadcast(this.gid, event.data);
+      this._play(); // next note
+    }, event.time - this.seekTime);
+  }
+
+}
   pause () {
     this.isPlaying = false
     clearTimeout(this.timeout)
@@ -159,6 +189,13 @@ class Recorder {
   replay (uid) {
     this.tapes[uid].play()
   }
+  replayUp (uid) {
+    this.tapes[uid].playUp()
+  }
+  replayDown (uid) {
+    this.tapes[uid].playDown()
+  }
+
   pause (uid) {
     this.tapes[uid].pause()
   }
