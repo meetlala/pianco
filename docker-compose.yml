@@ -3,12 +3,14 @@ services:
   frontend:
     ports:
       - "8080:80"
+    restart: always
     build:
       context: ./
       dockerfile: Dockerfile
   backend:
     ports:
       - "11088:11088"
+    restart: always
     build:
       context: ./
       dockerfile: backend.Dockerfile
