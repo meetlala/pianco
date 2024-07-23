@@ -447,7 +447,7 @@ const dropMic = () => {
   send(`dropmic ${GID} ${UID}`)
 }
 
-const recorder = ['record', 'stop', 'replay', 'pause'].reduce((recorder, action) => ({
+const recorder = ['record', 'stop', 'replay', 'pause', 'replayUp', 'replayDown'].reduce((recorder, action) => ({
   ...recorder,
   [action]: () => {
     ws.send(action)
