@@ -131,7 +131,6 @@ class Tape {
     }, event.time - this.seekTime);
   }
 
-}
   pause () {
     this.isPlaying = false
     clearTimeout(this.timeout)
