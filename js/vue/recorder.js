@@ -33,6 +33,26 @@ export const recorderApp = new Vue({
         this.isRecording = false;
       }
     },
+    togglePlayUp() {
+      if (this.isPlaying) {
+        recorder.pause();
+        this.isPlaying = false;
+      } else {
+        recorder.replayUp();
+        this.isPlaying = true;
+        this.isRecording = false;
+      }
+    },
+    togglePlayDown() {
+      if (this.isPlaying) {
+        recorder.pause();
+        this.isPlaying = false;
+      } else {
+        recorder.replayDown();
+        this.isPlaying = true;
+        this.isRecording = false;
+      }
+    },
   }
 })
 

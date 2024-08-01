@@ -249,6 +249,20 @@
 						<span v-if="!isPlaying" class="iconify" data-icon="mdi-play"></span>
 						<span v-else class="iconify" data-icon="mdi-pause"></span>
 					</button>
+					<button @click="togglePlayUp"
+							v-tippy :content="!isPlaying ? 'replayUp' : 'pause'"
+							:aria-label="!isPlaying ? 'replayUp' : 'pause'"
+					>
+						<span v-if="!isPlaying" class="iconify" data-icon="mdi:arrow-up-bold"></span>
+						<span v-else class="iconify" data-icon="mdi-pause"></span>
+					</button>
+					<button @click="togglePlayDown"
+							v-tippy :content="!isPlaying ? 'replayDown' : 'pause'"
+							:aria-label="!isPlaying ? 'replayDown' : 'pause'"
+					>
+						<span v-if="!isPlaying" class="iconify" data-icon="mdi:arrow-down-bold"></span>
+						<span v-else class="iconify" data-icon="mdi-pause"></span>
+					</button>
 				</div>
 			</div>
 		</div> <!-- end toolbar row -->

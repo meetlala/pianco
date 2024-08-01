@@ -366,6 +366,12 @@ wss.on('connection', async function connection(ws) {
         if (cmd === 'replay') {
           recorder.replay(uid)
         }
+        if (cmd === 'replayUp') {
+          recorder.replayUp(uid)
+        }
+        if (cmd === 'replayDown') {
+          recorder.replayDown(uid)
+        }
         if (cmd === 'pause') {
           recorder.pause(uid)
         }
