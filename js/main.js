@@ -19,6 +19,9 @@ import './ui.js'
 
 let transposition = 0
 
+let midiAccessInstance = null;
+let currentInput = null;
+
 const _ = cb => e => {
   // e.preventDefault()
   if (['mousedown', 'touchstart'].includes(e.type)) {
@@ -229,6 +232,7 @@ window.addEventListener('keyup', e => {
 
 // init MIDI INPUT (no output)
 const midiEl = document.querySelector('#midi') || {}
+const midiSelect = document.querySelector('#midi-devices');
 const reloadMidi = (isFrist) => {
   if (navigator.requestMIDIAccess) {
     console.log('This browser supports Web MIDI!')
@@ -250,9 +254,46 @@ const reloadMidi = (isFrist) => {
 midiEl.onclick = reloadMidi
 reloadMidi(true)
 
+function ChangeMidi() {
+  const selectedDeviceId = midiSelect.value;
+  if (!selectedDeviceId) {
+    if (currentInput) {
+      currentInput.onmidimessage = null;
+      console.log('Disconnected from MIDI device:', currentInput.name);
+      currentInput = null;
+    }
+    console.log('No MIDI device selected');
+    return;
+  }
+  if (selectedDeviceId && midiAccessInstance) {
+    if (currentInput) {
+      currentInput.onmidimessage = null;
+      console.log('Disconnected from MIDI device:', currentInput.name);
+    }
+    const input = [...midiAccessInstance.inputs.values()]
+        .find(input => input.id === selectedDeviceId);
+    if (input) {
+      connectMIDIInput(input);
+      currentInput = input;
+    }
+  }
+}
+function connectMIDIInput(input) {
+  input.onmidimessage = handleMIDIMessage;
+  console.log('Connected to MIDI device:', input.name);
+}
+midiSelect.addEventListener('change', ChangeMidi);
 
 function onMIDISuccess(isFrist) {
   return (midiAccess) => {
+    midiAccessInstance = midiAccess
+    const inputs = midiAccess.inputs.values();
+    for (let input of inputs) {
+      const option = document.createElement('option');
+      option.value = input.id;
+      option.textContent = input.name;
+      midiSelect.appendChild(option);
+    }
     const reconnectInputs = (e) => {
       const input = [...midiAccess.inputs.values()]
         .filter(input => !isBlacklistedDevice(input))
