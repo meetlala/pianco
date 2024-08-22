@@ -286,35 +286,51 @@ midiSelect.addEventListener('change', ChangeMidi);
 
 function onMIDISuccess(isFrist) {
   return (midiAccess) => {
-    midiAccessInstance = midiAccess
+    midiAccessInstance = midiAccess;
     const inputs = midiAccess.inputs.values();
+
+    // Очистка селектора перед добавлением новых опций
+    midiSelect.innerHTML = '';
+
+    let firstDeviceId = null; // Переменная для хранения ID первого устройства
+
     for (let input of inputs) {
       const option = document.createElement('option');
       option.value = input.id;
       option.textContent = input.name;
       midiSelect.appendChild(option);
-    }
-    const reconnectInputs = (e) => {
-      const input = [...midiAccess.inputs.values()]
-        .filter(input => !isBlacklistedDevice(input))
-        .find(input => input.state === 'connected')
-      if (!input) {
-        midiEl.className =  "none"
-        instrumentApp.midiEnabled = false
-        instrumentApp.midiTooltip = 'MIDI in: none'
-      } else {
-        input.onmidimessage = handleMIDIMessage
-        instrumentApp.midiTooltip = `MIDI in: ${input.name}`
-        instrumentApp.midiEnabled = true
-        midiEl.className = "on"
-        console.log('midi input connected', input.name)
-        
+
+      if (!firstDeviceId) {
+        firstDeviceId = input.id;
       }
     }
-    midiAccess.onstatechange = reconnectInputs
-    setTimeout(reconnectInputs, 100)
+
+    if (firstDeviceId) {
+      midiSelect.value = firstDeviceId;
+      ChangeMidi();
+    }
+
+    const reconnectInputs = (e) => {
+      const input = [...midiAccess.inputs.values()]
+          .filter(input => !isBlacklistedDevice(input))
+          .find(input => input.state === 'connected');
+      if (!input) {
+        midiEl.className = "none";
+        instrumentApp.midiEnabled = false;
+        instrumentApp.midiTooltip = 'MIDI in: none';
+      } else {
+        input.onmidimessage = handleMIDIMessage;
+        instrumentApp.midiTooltip = `MIDI in: ${input.name}`;
+        instrumentApp.midiEnabled = true;
+        midiEl.className = "on";
+        console.log('midi input connected', input.name);
+      }
+    };
+    midiAccess.onstatechange = reconnectInputs;
+    setTimeout(reconnectInputs, 100);
   }
 }
+
 
 let bankSelect = [0, 0]
 
