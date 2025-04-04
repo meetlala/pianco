@@ -32,7 +32,7 @@ class Tape {
   timeout = 0
   tape = []
   extendedTape = []
-  repeatCount = 30 // default repeat count, can be set dynamically
+  repeatCount = 50 // default repeat count, can be set dynamically
 
   constructor(gid, uid) {
     this.gid = gid
