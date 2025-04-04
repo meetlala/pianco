@@ -19,6 +19,9 @@ import './ui.js'
 
 let transposition = 0
 
+let midiAccessInstance = null;
+let currentInput = null;
+
 const _ = cb => e => {
   // e.preventDefault()
   if (['mousedown', 'touchstart'].includes(e.type)) {
@@ -229,6 +232,7 @@ window.addEventListener('keyup', e => {
 
 // init MIDI INPUT (no output)
 const midiEl = document.querySelector('#midi') || {}
+const midiSelect = document.querySelector('#midi-devices');
 const reloadMidi = (isFrist) => {
   if (navigator.requestMIDIAccess) {
     console.log('This browser supports Web MIDI!')
@@ -250,30 +254,83 @@ const reloadMidi = (isFrist) => {
 midiEl.onclick = reloadMidi
 reloadMidi(true)
 
+function ChangeMidi() {
+  const selectedDeviceId = midiSelect.value;
+  if (!selectedDeviceId) {
+    if (currentInput) {
+      currentInput.onmidimessage = null;
+      console.log('Disconnected from MIDI device:', currentInput.name);
+      currentInput = null;
+    }
+    console.log('No MIDI device selected');
+    return;
+  }
+  if (selectedDeviceId && midiAccessInstance) {
+    if (currentInput) {
+      currentInput.onmidimessage = null;
+      console.log('Disconnected from MIDI device:', currentInput.name);
+    }
+    const input = [...midiAccessInstance.inputs.values()]
+        .find(input => input.id === selectedDeviceId);
+    if (input) {
+      connectMIDIInput(input);
+      currentInput = input;
+    }
+  }
+}
+function connectMIDIInput(input) {
+  input.onmidimessage = handleMIDIMessage;
+  console.log('Connected to MIDI device:', input.name);
+}
+midiSelect.addEventListener('change', ChangeMidi);
 
 function onMIDISuccess(isFrist) {
   return (midiAccess) => {
-    const reconnectInputs = (e) => {
-      const input = [...midiAccess.inputs.values()]
-        .filter(input => !isBlacklistedDevice(input))
-        .find(input => input.state === 'connected')
-      if (!input) {
-        midiEl.className =  "none"
-        instrumentApp.midiEnabled = false
-        instrumentApp.midiTooltip = 'MIDI in: none'
-      } else {
-        input.onmidimessage = handleMIDIMessage
-        instrumentApp.midiTooltip = `MIDI in: ${input.name}`
-        instrumentApp.midiEnabled = true
-        midiEl.className = "on"
-        console.log('midi input connected', input.name)
-        
+    midiAccessInstance = midiAccess;
+    const inputs = midiAccess.inputs.values();
+
+    // Очистка селектора перед добавлением новых опций
+    midiSelect.innerHTML = '';
+
+    let firstDeviceId = null; // Переменная для хранения ID первого устройства
+
+    for (let input of inputs) {
+      const option = document.createElement('option');
+      option.value = input.id;
+      option.textContent = input.name;
+      midiSelect.appendChild(option);
+
+      if (!firstDeviceId) {
+        firstDeviceId = input.id;
       }
     }
-    midiAccess.onstatechange = reconnectInputs
-    setTimeout(reconnectInputs, 100)
+
+    if (firstDeviceId) {
+      midiSelect.value = firstDeviceId;
+      ChangeMidi();
+    }
+
+    const reconnectInputs = (e) => {
+      const input = [...midiAccess.inputs.values()]
+          .filter(input => !isBlacklistedDevice(input))
+          .find(input => input.state === 'connected');
+      if (!input) {
+        midiEl.className = "none";
+        instrumentApp.midiEnabled = false;
+        instrumentApp.midiTooltip = 'MIDI in: none';
+      } else {
+        input.onmidimessage = handleMIDIMessage;
+        instrumentApp.midiTooltip = `MIDI in: ${input.name}`;
+        instrumentApp.midiEnabled = true;
+        midiEl.className = "on";
+        console.log('midi input connected', input.name);
+      }
+    };
+    midiAccess.onstatechange = reconnectInputs;
+    setTimeout(reconnectInputs, 100);
   }
 }
+
 
 let bankSelect = [0, 0]
 
