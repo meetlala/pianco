@@ -1,7 +1,7 @@
 name: Deploy to PROD EBS
 
 env:
-  EB_PACKAGE_S3_BUCKET_NAME: "pianco-ebs-deployments"
+  EB_PACKAGE_S3_BUCKET_NAME: "pianco-ebs-deploy"
   EB_APPLICATION_NAME: "pianco-webapp"
   EB_ENVIRONMENT_NAME: "pianco-prod-webapp"
   AWS_REGION_NAME: "us-east-2"

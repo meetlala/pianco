@@ -22,13 +22,13 @@ Pianco is deployed as a multi-container Docker application with:
 Create an S3 bucket to store deployment packages:
 
 ```bash
-aws s3 mb s3://pianco-ebs-deployments --region us-east-2
+aws s3 mb s3://pianco-ebs-deploy --region us-east-2
 ```
 
 Verify the bucket was created:
 
 ```bash
-aws s3 ls | grep pianco-ebs-deployments
+aws s3 ls | grep pianco-ebs-deploy
 ```
 
 ## Step 2: Create Elastic Beanstalk Application
@@ -260,7 +260,7 @@ aws elasticbeanstalk delete-application \
   --region us-east-2
 
 # Delete the S3 bucket (remove all objects first)
-aws s3 rb s3://pianco-ebs-deployments --force --region us-east-2
+aws s3 rb s3://pianco-ebs-deploy --force --region us-east-2
 ```
 
 ## Support
