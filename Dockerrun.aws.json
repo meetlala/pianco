@@ -5,7 +5,7 @@
       "name": "frontend",
       "image": "frontend",
       "essential": true,
-      "memory": 512,
+      "memory": 1024,
       "portMappings": [
         {
           "hostPort": 8080,
@@ -17,7 +17,7 @@
       "name": "backend",
       "image": "backend",
       "essential": true,
-      "memory": 512,
+      "memory": 1024,
       "portMappings": [
         {
           "hostPort": 11088,

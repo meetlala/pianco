@@ -61,7 +61,7 @@ aws elasticbeanstalk create-environment \
   --solution-stack-name "64bit Amazon Linux 2 v3.6.0 running Docker" \
   --region us-east-2 \
   --option-settings \
-    Namespace=aws:autoscaling:launchconfiguration,OptionName=InstanceType,Value=t3.small \
+    Namespace=aws:autoscaling:launchconfiguration,OptionName=InstanceType,Value=t3.xlarge \
     Namespace=aws:elasticbeanstalk:environment,OptionName=EnvironmentType,Value=LoadBalanced \
     Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=HealthCheckPath,Value=/
 ```
