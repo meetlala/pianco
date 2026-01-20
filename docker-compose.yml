@@ -1,16 +1,15 @@
-version: '3'
+version: '3.8'
 services:
   frontend:
+    image: 385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/frontend:latest
     ports:
       - "8080:80"
     restart: always
-    build:
-      context: ./
-      dockerfile: Dockerfile
+    
   backend:
+    image: 385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/backend:latest
     ports:
       - "11088:11088"
     restart: always
-    build:
-      context: ./
-      dockerfile: backend.Dockerfile
+    environment:
+      - PORT=11088

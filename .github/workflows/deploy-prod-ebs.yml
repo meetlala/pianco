@@ -47,7 +47,7 @@ jobs:
           docker push ${{ env.ECR_REGISTRY }}/pianco/backend:latest
 
       - name: Create ZIP deployment package
-        run: zip -r ${{ env.DEPLOY_PACKAGE_NAME }} ./ -x *.git* -x *docker-compose*.yml* -x *Dockerfile*
+        run: zip -r ${{ env.DEPLOY_PACKAGE_NAME }} docker-compose.yml .ebextensions/ -x *.git* -x *Dockerfile* -x *docker-compose.prod.yml*
 
       - name: Copy deployment package to S3 Bucket
         run: aws s3 cp ${{ env.DEPLOY_PACKAGE_NAME }} s3://${{ env.EB_PACKAGE_S3_BUCKET_NAME }}/

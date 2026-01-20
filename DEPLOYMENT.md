@@ -4,13 +4,13 @@ This guide provides step-by-step instructions for deploying the Pianco applicati
 
 ## Architecture Overview
 
-Pianco is deployed as an ECS multi-container Docker application with:
+Pianco is deployed as a Docker Compose multi-container application with:
 - **Frontend**: Static web application (port 8080)
 - **Backend**: WebSocket server for real-time multiplayer piano (port 11088)
 - **ECR**: Amazon Elastic Container Registry for Docker images
 - **Load Balancer**: AWS Application Load Balancer for traffic routing
 - **Region**: us-east-2 (Ohio)
-- **Platform**: 64bit Amazon Linux 2023 v4.x running Docker (ECS Multi-Container)
+- **Platform**: 64bit Amazon Linux 2023 v4.x running Docker
 
 ## Prerequisites
 
@@ -102,7 +102,7 @@ If the `aws-elasticbeanstalk-ec2-role` doesn't exist, you'll need to create it f
 
 ## Step 3: Create Elastic Beanstalk Environment
 
-Create the production environment using the ECS Multi-Container platform:
+Create the production environment using the Docker Compose platform:
 
 ```bash
 aws elasticbeanstalk create-environment \
@@ -118,9 +118,9 @@ aws elasticbeanstalk create-environment \
 ```
 
 **Important Notes:**
-- The solution stack name must be for Amazon Linux 2023 v4.x (ECS Multi-Container support)
+- The solution stack name must be for Amazon Linux 2023 v4.x (Docker Compose support)
 - The IAM instance profile must have ECR read permissions
-- This uses `Dockerrun.aws.json` v2 format (not Docker Compose)
+- This uses Docker Compose format (`docker-compose.yml`)
 
 **Note:** Environment creation takes 5-10 minutes. Monitor the status with:
 
@@ -149,51 +149,31 @@ aws elasticbeanstalk update-environment \
 
 Replace `your-secure-server-key` and `your-secure-remote-key` with your own secure random strings.
 
-## Step 5: Update Dockerrun.aws.json
+## Step 5: Docker Compose Configuration
 
-Update the `Dockerrun.aws.json` file to reference your ECR images:
+The `docker-compose.yml` file references pre-built ECR images:
 
-```json
-{
-  "AWSEBDockerrunVersion": 2,
-  "containerDefinitions": [
-    {
-      "name": "frontend",
-      "image": "385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/frontend:latest",
-      "essential": true,
-      "memory": 1024,
-      "portMappings": [
-        {
-          "hostPort": 8080,
-          "containerPort": 80
-        }
-      ]
-    },
-    {
-      "name": "backend",
-      "image": "385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/backend:latest",
-      "essential": true,
-      "memory": 1024,
-      "portMappings": [
-        {
-          "hostPort": 11088,
-          "containerPort": 11088
-        }
-      ],
-      "environment": [
-        {
-          "name": "PORT",
-          "value": "11088"
-        }
-      ]
-    }
-  ]
-}
+```yaml
+version: '3.8'
+services:
+  frontend:
+    image: 385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/frontend:latest
+    ports:
+      - "8080:80"
+    restart: always
+    
+  backend:
+    image: 385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/backend:latest
+    ports:
+      - "11088:11088"
+    restart: always
+    environment:
+      - PORT=11088
 ```
 
 Replace `385626522460` with your AWS account ID.
 
-**Note:** This file is already updated in the repository. The GitHub workflow will build images and push them to these ECR repositories before deployment.
+**Note:** This file is already configured in the repository. The GitHub workflow will build images and push them to these ECR repositories before deployment.
 
 ## Step 6: Configure GitHub Secrets
 
@@ -220,14 +200,14 @@ Add the following secrets to your GitHub repository:
 The deployment process will:
 1. **Build Docker images**: Build frontend and backend images from Dockerfiles
 2. **Push to ECR**: Push images to Amazon ECR with tags (commit SHA and `latest`)
-3. **Package application**: Create deployment zip with `Dockerrun.aws.json` and application code
+3. **Package application**: Create deployment zip with `docker-compose.yml` and `.ebextensions`
 4. **Upload to S3**: Upload deployment package to S3 bucket
 5. **Create application version**: Register new version in Elastic Beanstalk
 6. **Deploy to EBS**: Deploy the new version to the environment
 7. **Pull images**: EBS pulls the Docker images from ECR
-8. **Launch containers**: Start the frontend and backend containers
+8. **Launch containers**: Start the frontend and backend containers via Docker Compose
 
-**Important**: The workflow now builds and pushes Docker images before deployment. This is required for ECS Multi-Container deployments, as they use prebuilt images from a registry (not local Dockerfiles).
+**Important**: The workflow builds and pushes Docker images before deployment. This is required for Docker Compose deployments, as they use prebuilt images from a registry (not local Dockerfiles).
 
 ## Step 8: Access Your Application
 
@@ -248,20 +228,20 @@ http://pianco-prod-webapp.us-east-2.elasticbeanstalk.com
 
 ## Deployment Architecture
 
-The ECS Multi-Container deployment uses the following architecture:
+The Docker Compose deployment uses the following architecture:
 
 1. **GitHub Actions Workflow**: Builds Docker images and pushes to ECR
 2. **Amazon ECR**: Stores the Docker images (frontend and backend)
-3. **S3 Bucket**: Stores deployment packages containing `Dockerrun.aws.json`
-4. **Elastic Beanstalk**: Orchestrates ECS tasks based on `Dockerrun.aws.json`
-5. **ECS Tasks**: Run the containers on EC2 instances
+3. **S3 Bucket**: Stores deployment packages containing `docker-compose.yml`
+4. **Elastic Beanstalk**: Orchestrates Docker Compose services based on `docker-compose.yml`
+5. **Docker Compose**: Runs the containers on EC2 instances
 6. **Application Load Balancer**: Routes traffic to the containers
 
-**Key Differences from Docker Compose Deployment:**
-- Uses `Dockerrun.aws.json` version 2 (not `docker-compose.yml`)
+**Key Points:**
+- Uses Docker Compose v3 format (`docker-compose.yml`)
 - Requires prebuilt images in ECR (not local Dockerfiles)
 - Images are built during CI/CD, not on the EC2 instance
-- Better suited for production with versioned image tags
+- Suited for production with versioned image tags
 
 ## Monitoring and Logs
 
@@ -331,13 +311,14 @@ If you see errors like "unable to pull image from ECR":
 
 3. Check if images were pushed successfully in GitHub Actions logs
 
-### Dockerrun.aws.json Version Error
+### Docker Compose Configuration Issues
 
-If you see "unsupported version" or "invalid use of string struct tag":
+If you see deployment errors related to Docker Compose:
 
-1. Ensure `docker-compose.yml` is NOT in the deployment package (it conflicts with Dockerrun v2)
-2. Verify `Dockerrun.aws.json` has `"AWSEBDockerrunVersion": 2` (number, not string)
-3. Ensure you're using Amazon Linux 2023 v4.x platform (for ECS Multi-Container)
+1. Ensure `docker-compose.yml` is included in the deployment package
+2. Verify the compose file uses version 3.x format
+3. Ensure you're using Amazon Linux 2023 v4.x platform (for Docker Compose support)
+4. Confirm ECR images exist and are accessible
 
 ### GitHub Actions Build Failures
 
