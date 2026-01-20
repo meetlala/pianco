@@ -58,7 +58,7 @@ Create the production environment:
 aws elasticbeanstalk create-environment \
   --application-name pianco-webapp \
   --environment-name pianco-prod-webapp \
-  --solution-stack-name "64bit Amazon Linux 2 v3.6.0 running Docker" \
+  --solution-stack-name "64bit Amazon Linux 2 v4.5.1 running Docker" \
   --region us-east-2 \
   --option-settings \
     Namespace=aws:autoscaling:launchconfiguration,OptionName=InstanceType,Value=t3.xlarge \
