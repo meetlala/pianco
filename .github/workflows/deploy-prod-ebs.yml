@@ -1,0 +1,69 @@
+name: Deploy to PROD EBS
+
+env:
+  EB_PACKAGE_S3_BUCKET_NAME: "pianco-ebs-deployments"
+  EB_APPLICATION_NAME: "pianco-webapp"
+  EB_ENVIRONMENT_NAME: "pianco-prod-webapp"
+  AWS_REGION_NAME: "us-east-2"
+  DEPLOY_PACKAGE_NAME: "pianco-webapp-prod-deploy-package-${{ github.sha }}.zip"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  CI-part:
+    runs-on: ubuntu-latest
+    environment: prod
+    concurrency: prod
+    steps:
+      - name: Git clone our repo
+        uses: actions/checkout@v2
+
+      - name: Move proper docker-compose
+        run: mv docker-compose.prod.yml docker-compose.yml
+
+      - name: Create ZIP deployment package
+        run: zip -r ${{ env.DEPLOY_PACKAGE_NAME }} ./ -x *.git* -x *docker-compose.dev.yml*
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.MY_AWS_ACCES_KEY }}
+          aws-secret-access-key: ${{ secrets.MY_AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION_NAME }}
+
+      - name: Copy deployment package to S3 Bucket
+        run: aws s3 cp ${{ env.DEPLOY_PACKAGE_NAME }} s3://${{ env.EB_PACKAGE_S3_BUCKET_NAME }}/
+
+      - name: Succeed CI part
+        run: echo "Successfully finished CI part"
+
+  CD-part:
+    runs-on: ubuntu-latest
+    needs: [CI-part]
+    environment: prod
+    concurrency: prod
+    steps:
+      - name: Configure my AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.MY_AWS_ACCES_KEY }}
+          aws-secret-access-key: ${{ secrets.MY_AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION_NAME }}
+
+      - name: Create new ElasticBeanstalk Application Version
+        run: |
+          aws elasticbeanstalk create-application-version \
+          --application-name ${{ env.EB_APPLICATION_NAME }} \
+          --source-bundle S3Bucket="${{ env.EB_PACKAGE_S3_BUCKET_NAME }}",S3Key="${{ env.DEPLOY_PACKAGE_NAME }}" \
+          --version-label "Ver-${{ github.sha }}" \
+          --description "CommitSHA-${{ github.sha }}"
+
+      - name: Deploy new ElasticBeanstalk Application Version
+        run: aws elasticbeanstalk update-environment --environment-name ${{ env.EB_ENVIRONMENT_NAME }} --version-label "Ver-${{ github.sha }}"
+
+      - name: Wait for Environment to become Ready
+        run: aws elasticbeanstalk wait environment-updated --environment-name ${{ env.EB_ENVIRONMENT_NAME }}
+
+      - name: Succeed CD part
+        run: echo "Successfully finished CD part"

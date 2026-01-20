@@ -1,0 +1,35 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "frontend",
+      "essential": true,
+      "memory": 512,
+      "portMappings": [
+        {
+          "hostPort": 8080,
+          "containerPort": 80
+        }
+      ]
+    },
+    {
+      "name": "backend",
+      "image": "backend",
+      "essential": true,
+      "memory": 512,
+      "portMappings": [
+        {
+          "hostPort": 11088,
+          "containerPort": 11088
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "11088"
+        }
+      ]
+    }
+  ]
+}
