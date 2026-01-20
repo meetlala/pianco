@@ -4,11 +4,13 @@ This guide provides step-by-step instructions for deploying the Pianco applicati
 
 ## Architecture Overview
 
-Pianco is deployed as a multi-container Docker application with:
+Pianco is deployed as an ECS multi-container Docker application with:
 - **Frontend**: Static web application (port 8080)
 - **Backend**: WebSocket server for real-time multiplayer piano (port 11088)
+- **ECR**: Amazon Elastic Container Registry for Docker images
 - **Load Balancer**: AWS Application Load Balancer for traffic routing
 - **Region**: us-east-2 (Ohio)
+- **Platform**: 64bit Amazon Linux 2023 v4.x running Docker (ECS Multi-Container)
 
 ## Prerequisites
 
@@ -31,6 +33,38 @@ Verify the bucket was created:
 aws s3 ls | grep pianco-ebs-deploy
 ```
 
+## Step 1.5: Create ECR Repositories
+
+Create Amazon ECR repositories to store Docker images. ECS Multi-Container deployments require prebuilt images in a registry:
+
+```bash
+# Create frontend repository
+aws ecr create-repository \
+  --repository-name pianco/frontend \
+  --region us-east-2
+
+# Create backend repository
+aws ecr create-repository \
+  --repository-name pianco/backend \
+  --region us-east-2
+```
+
+Verify repositories were created:
+
+```bash
+aws ecr describe-repositories \
+  --repository-names pianco/frontend pianco/backend \
+  --region us-east-2 \
+  --query "repositories[*].[repositoryName,repositoryUri]" \
+  --output table
+```
+
+Save the repository URIs for later use. They will have the format:
+```
+385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/frontend
+385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/backend
+```
+
 ## Step 2: Create Elastic Beanstalk Application
 
 Create the EBS application:
@@ -50,21 +84,43 @@ aws elasticbeanstalk describe-applications \
   --region us-east-2
 ```
 
+## Step 2.5: Setup IAM Roles
+
+Elastic Beanstalk requires IAM roles to manage AWS resources. For ECS Multi-Container deployments with ECR, ensure the EC2 instance role has ECR permissions:
+
+```bash
+# Add ECR read permissions to allow pulling Docker images from ECR
+aws iam attach-role-policy \
+  --role-name aws-elasticbeanstalk-ec2-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+```
+
+If the `aws-elasticbeanstalk-ec2-role` doesn't exist, you'll need to create it first with the standard Elastic Beanstalk policies. The role also needs:
+- `AWSElasticBeanstalkWebTier`
+- `AWSElasticBeanstalkMulticontainerDocker`
+- `AWSElasticBeanstalkWorkerTier`
+
 ## Step 3: Create Elastic Beanstalk Environment
 
-Create the production environment:
+Create the production environment using the ECS Multi-Container platform:
 
 ```bash
 aws elasticbeanstalk create-environment \
   --application-name pianco-webapp \
   --environment-name pianco-prod-webapp \
-  --solution-stack-name "64bit Amazon Linux 2 v4.5.1 running Docker" \
+  --solution-stack-name "64bit Amazon Linux 2023 v4.9.1 running Docker" \
   --region us-east-2 \
   --option-settings \
     Namespace=aws:autoscaling:launchconfiguration,OptionName=InstanceType,Value=t3.xlarge \
+    Namespace=aws:autoscaling:launchconfiguration,OptionName=IamInstanceProfile,Value=aws-elasticbeanstalk-ec2-role \
     Namespace=aws:elasticbeanstalk:environment,OptionName=EnvironmentType,Value=LoadBalanced \
     Namespace=aws:elasticbeanstalk:environment:process:default,OptionName=HealthCheckPath,Value=/
 ```
+
+**Important Notes:**
+- The solution stack name must be for Amazon Linux 2023 v4.x (ECS Multi-Container support)
+- The IAM instance profile must have ECR read permissions
+- This uses `Dockerrun.aws.json` v2 format (not Docker Compose)
 
 **Note:** Environment creation takes 5-10 minutes. Monitor the status with:
 
@@ -93,7 +149,53 @@ aws elasticbeanstalk update-environment \
 
 Replace `your-secure-server-key` and `your-secure-remote-key` with your own secure random strings.
 
-## Step 5: Configure GitHub Secrets
+## Step 5: Update Dockerrun.aws.json
+
+Update the `Dockerrun.aws.json` file to reference your ECR images:
+
+```json
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/frontend:latest",
+      "essential": true,
+      "memory": 1024,
+      "portMappings": [
+        {
+          "hostPort": 8080,
+          "containerPort": 80
+        }
+      ]
+    },
+    {
+      "name": "backend",
+      "image": "385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/backend:latest",
+      "essential": true,
+      "memory": 1024,
+      "portMappings": [
+        {
+          "hostPort": 11088,
+          "containerPort": 11088
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "11088"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Replace `385626522460` with your AWS account ID.
+
+**Note:** This file is already updated in the repository. The GitHub workflow will build images and push them to these ECR repositories before deployment.
+
+## Step 6: Configure GitHub Secrets
 
 Add the following secrets to your GitHub repository:
 
@@ -107,7 +209,7 @@ Add the following secrets to your GitHub repository:
    - **Name**: `MY_AWS_SECRET_KEY`
    - **Value**: Your AWS Secret Access Key
 
-## Step 6: Deploy Using GitHub Actions
+## Step 7: Deploy Using GitHub Actions
 
 1. Go to the **Actions** tab in your GitHub repository
 2. Select the **Deploy to PROD EBS** workflow
@@ -116,13 +218,18 @@ Add the following secrets to your GitHub repository:
 5. Click **Run workflow**
 
 The deployment process will:
-- Package the application code
-- Upload to S3
-- Create a new application version
-- Deploy to Elastic Beanstalk
-- Wait for the deployment to complete
+1. **Build Docker images**: Build frontend and backend images from Dockerfiles
+2. **Push to ECR**: Push images to Amazon ECR with tags (commit SHA and `latest`)
+3. **Package application**: Create deployment zip with `Dockerrun.aws.json` and application code
+4. **Upload to S3**: Upload deployment package to S3 bucket
+5. **Create application version**: Register new version in Elastic Beanstalk
+6. **Deploy to EBS**: Deploy the new version to the environment
+7. **Pull images**: EBS pulls the Docker images from ECR
+8. **Launch containers**: Start the frontend and backend containers
 
-## Step 7: Access Your Application
+**Important**: The workflow now builds and pushes Docker images before deployment. This is required for ECS Multi-Container deployments, as they use prebuilt images from a registry (not local Dockerfiles).
+
+## Step 8: Access Your Application
 
 After successful deployment, get your application URL:
 
@@ -138,6 +245,23 @@ Your application will be available at:
 ```
 http://pianco-prod-webapp.us-east-2.elasticbeanstalk.com
 ```
+
+## Deployment Architecture
+
+The ECS Multi-Container deployment uses the following architecture:
+
+1. **GitHub Actions Workflow**: Builds Docker images and pushes to ECR
+2. **Amazon ECR**: Stores the Docker images (frontend and backend)
+3. **S3 Bucket**: Stores deployment packages containing `Dockerrun.aws.json`
+4. **Elastic Beanstalk**: Orchestrates ECS tasks based on `Dockerrun.aws.json`
+5. **ECS Tasks**: Run the containers on EC2 instances
+6. **Application Load Balancer**: Routes traffic to the containers
+
+**Key Differences from Docker Compose Deployment:**
+- Uses `Dockerrun.aws.json` version 2 (not `docker-compose.yml`)
+- Requires prebuilt images in ECR (not local Dockerfiles)
+- Images are built during CI/CD, not on the EC2 instance
+- Better suited for production with versioned image tags
 
 ## Monitoring and Logs
 
@@ -185,6 +309,45 @@ aws elasticbeanstalk describe-events \
   --severity ERROR
 ```
 
+### Docker Image Pull Errors
+
+If you see errors like "unable to pull image from ECR":
+
+1. Verify IAM permissions:
+   ```bash
+   aws iam list-attached-role-policies --role-name aws-elasticbeanstalk-ec2-role | grep ECR
+   ```
+
+2. Verify images exist in ECR:
+   ```bash
+   aws ecr describe-images \
+     --repository-name pianco/frontend \
+     --region us-east-2
+   
+   aws ecr describe-images \
+     --repository-name pianco/backend \
+     --region us-east-2
+   ```
+
+3. Check if images were pushed successfully in GitHub Actions logs
+
+### Dockerrun.aws.json Version Error
+
+If you see "unsupported version" or "invalid use of string struct tag":
+
+1. Ensure `docker-compose.yml` is NOT in the deployment package (it conflicts with Dockerrun v2)
+2. Verify `Dockerrun.aws.json` has `"AWSEBDockerrunVersion": 2` (number, not string)
+3. Ensure you're using Amazon Linux 2023 v4.x platform (for ECS Multi-Container)
+
+### GitHub Actions Build Failures
+
+If image builds fail in GitHub Actions:
+
+1. Check Dockerfile syntax
+2. Verify ECR repositories exist
+3. Ensure AWS credentials are correct in GitHub secrets
+4. Check ECR login step completed successfully
+
 ### WebSocket Connection Issues
 
 The `.ebextensions/01_proxy.config` file configures nginx for WebSocket support. Verify:
@@ -215,7 +378,16 @@ To deploy a new version:
 2. Go to **Actions** → **Deploy to PROD EBS**
 3. Click **Run workflow**
 
-The GitHub Action will automatically create a new version and deploy it.
+The GitHub Action will:
+- Build new Docker images with updated code
+- Tag them with the commit SHA and `latest`
+- Push to ECR (overwriting the `latest` tag)
+- Deploy the new version to Elastic Beanstalk
+- EBS will pull the updated images and restart containers
+
+**Image Versioning**: Each deployment creates images tagged with both:
+- Commit SHA (e.g., `abc123def456`) - immutable version
+- `latest` - always points to the most recent deployment
 
 ## Scaling Configuration
 
