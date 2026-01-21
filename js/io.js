@@ -338,9 +338,9 @@ const pingPong = () => {
 const connect = () => {
   console.log('connecting')
   try {
-    ws = new WebSocket(
-        'wss://ws.meetlala.io'
-    )
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${location.host}/ws`;
+    ws = new WebSocket(wsUrl)
     // handle regroup
     ws.addEventListener('message', onRegroup)
     // hanlde incomming notes
