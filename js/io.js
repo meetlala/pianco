@@ -339,7 +339,7 @@ const connect = () => {
   console.log('connecting')
   try {
     ws = new WebSocket(
-        'wss://ws.meetlala.io'
+        'wss://asdf.meetlala.io/ws'
     )
     // handle regroup
     ws.addEventListener('message', onRegroup)
