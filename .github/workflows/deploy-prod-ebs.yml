@@ -46,6 +46,12 @@ jobs:
           docker push ${{ env.ECR_REGISTRY }}/pianco/backend:${{ github.sha }}
           docker push ${{ env.ECR_REGISTRY }}/pianco/backend:latest
 
+      - name: Generate docker-compose.yml from template
+        run: |
+          sed 's/IMAGE_TAG_PLACEHOLDER/${{ github.sha }}/g' docker-compose.yml.template > docker-compose.yml
+          echo "Generated docker-compose.yml with image tag: ${{ github.sha }}"
+          cat docker-compose.yml
+
       - name: Create ZIP deployment package
         run: zip -r ${{ env.DEPLOY_PACKAGE_NAME }} docker-compose.yml nginx.conf -x *.git* -x *Dockerfile* -x *docker-compose.prod.yml*
 
