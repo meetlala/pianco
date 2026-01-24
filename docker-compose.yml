@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   nginx:
-    image: nginx:alpine
+    image: 385626522460.dkr.ecr.us-east-2.amazonaws.com/nginx:latest
     ports:
       - "80:80"
     volumes:
@@ -17,8 +17,6 @@ services:
     
   backend:
     image: 385626522460.dkr.ecr.us-east-2.amazonaws.com/pianco/backend:latest
-    ports:
-      - "11088:11088"
     restart: always
     environment:
       - PORT=11088
