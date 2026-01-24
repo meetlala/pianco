@@ -8,8 +8,6 @@ services:
       context: ./
       dockerfile: Dockerfile
   backend:
-    ports:
-      - "11088:11088"
     restart: always
     build:
       context: ./
